@@ -3,6 +3,7 @@
 open System
 open Argu
 open Ionide.ProjInfo
+open Ionide.ProjInfo.Tool
 open Ionide.ProjInfo.Types
 
 type Args =
@@ -74,5 +75,19 @@ let main argv =
             failwith "Couldn't parse any projects"
             exit 1
         | projects ->
+//            let content =
+//                projects
+//                |> List.map (fun p ->
+//                    if p.ProjectFileName.EndsWith(".csproj") then
+//                        $"{p.ProjectFileName},{p.TargetPath}"
+//                    else
+//                        let sourceFiles = p.SourceFiles |> String.concat "|"
+//                        let projectOptions = p.OtherOptions |> String.concat "|"
+//                        let references = p.ReferencedProjects |> List.map (fun rp -> rp.ProjectFileName) |> String.concat "|"
+//                        $"{p.ProjectFileName},{p.TargetPath},{sourceFiles},{projectOptions},{references}"
+//                )
+//                |> String.concat "\n"
+//            System.IO.File.WriteAllText(@"C:\Users\nojaf\Downloads\output.txt", content)
+            CodePrinter.printCode projects
             printfn "%A" projects
             exit 0
