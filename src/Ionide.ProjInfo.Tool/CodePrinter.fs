@@ -71,6 +71,7 @@ let private mapProject (project: ProjectOptions) : SynModuleDecl list =
         let recordInstance: SynExpr =
             let referencedProjects =
                 project.ReferencedProjects
+                |> List.filter (fun p -> p.ProjectFileName.EndsWith(".fsproj"))
                 |> List.map (fun p ->
                     let functionName = projectFunctionName p.ProjectFileName
 
@@ -80,8 +81,10 @@ let private mapProject (project: ProjectOptions) : SynModuleDecl list =
                         SynExpr.App(ExprAtomicFlag.NonAtomic, false, mkSynExprIdent $"memo{functionName}", (mkSynExprConstRegularString functionName), zeroRange))
                 |> mkSynExprArrayOrListOfSeqExpr true
 
-            let stamp = 1L // System.Text.RegularExpressions.Regex.Match(project.ProjectFileName, @"\d+").Value |> (int64)
-            
+            let stampExpr = noneExpr
+            // System.Text.RegularExpressions.Regex.Match(project.ProjectFileName, @"\d+").Value |> (int64)
+            // (mkSynExprAppNonAtomic (mkSynExprIdent "Some") (mkSynExprConst (mkSynConstInt64 stamp)))
+
             SynExpr.Record(
                 None,
                 None,
@@ -95,7 +98,7 @@ let private mapProject (project: ProjectOptions) : SynModuleDecl list =
                   mkSynExprRecordField "LoadTime" (mkSynExprLongIdent "DateTime.Now")
                   mkSynExprRecordField "UnresolvedReferences" noneExpr
                   mkSynExprRecordField "OriginalLoadReferences" (SynExpr.ArrayOrList(false, [], zeroRange))
-                  mkSynExprRecordField "Stamp" (mkSynExprAppNonAtomic (mkSynExprIdent "Some") (mkSynExprConst (mkSynConstInt64 stamp))) ],
+                  mkSynExprRecordField "Stamp" stampExpr ],
                 zeroRange
             )
 
@@ -147,7 +150,7 @@ let memoization (f: string -> 'a) =
             cache.Add(x, result)
             result)
 """
-              yield! List.collect mapProject projects ]
+              yield! (List.filter (fun p -> p.ProjectFileName.EndsWith(".fsproj")) projects) |> List.collect mapProject ]
 
         ParsedInput.ImplFile(
             ParsedImplFileInput.ParsedImplFileInput(
@@ -163,4 +166,4 @@ let memoization (f: string -> 'a) =
 
     CodeFormatter.FormatASTAsync(ast, "tmp.fs", [], None, FormatConfig.FormatConfig.Default)
     |> Async.RunSynchronously
-    |> fun source -> File.WriteAllText(@"C:\Users\nojaf\Downloads\sample-project.fs", source)
+    |> fun source -> File.WriteAllText(@"C:\Users\nojaf\Downloads\fcs-project.fs", source)
